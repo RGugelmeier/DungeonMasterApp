@@ -23,6 +23,21 @@ def refresh_expiring_jwts(response):
     except(RuntimeError, KeyError):
         return response
 
+# Used to get all
+@auth_bp.get("/me")
+@jwt_required()
+def me():
+    user_id = get_jwt_identity()
+    result = Users.query.filter((Users.user_id == user_id)).first()
+    return jsonify({
+        'user_id': result.user_id,
+        'username': result.username,
+        'email': result.email,
+        'created_at': result.created_at,
+        'updated_at': result.updated_at,
+        'user_type': result.user_type
+    })
+
 # Register a new user.
 # First, verify the recieved data is valid. If it is, verify the password is long enough (in this case, 8 characters or more)
 # Checks if a user already exists with the same email or email. If it does, do not allow a new account to be created.
@@ -40,7 +55,7 @@ def register_new_user():
     if existing_user:
         return jsonify({'error': 'Username or email already in use'}), 409
     try:
-        password_hashed = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt(8))
+        password_hashed = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         new_user = Users(username=data['username'], email=data['email'], password_hashed=password_hashed)
         db.session.add(new_user)
         db.session.commit()
@@ -71,13 +86,10 @@ def login():
             response = jsonify({
                 'Status': "Login successful!"
             })
-            access_token = create_access_token(identity=login_attempt.username)
+            access_token = create_access_token(identity=login_attempt.user_id)
             set_access_cookies(response, access_token)
             return response, 200
-        else:
-            return jsonify({"Error": "Incorrect password!"}), 401
-    else:
-        return jsonify({"Status": "User does not exist"}), 404
+    return jsonify({"error": "Invalid email or password"}), 401
     
 # This logs out the user.
 # First, it requires a jwt which also verifies that it is a valid jwt

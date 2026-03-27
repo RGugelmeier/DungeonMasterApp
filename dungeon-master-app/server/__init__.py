@@ -28,6 +28,7 @@ def create_app():
 
     CORS(app, 
         origins=["http://localhost:5173"],
+        supports_credentials=True,
         methods=["GET", "POST", "PATCH", "DELETE"])
 
     database_url = os.getenv('DATABASE_URL')

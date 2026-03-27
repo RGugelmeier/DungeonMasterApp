@@ -1,23 +1,19 @@
+import { apiFetch } from "./API/apiClient";
+
 function TryLogin(event){
     event.preventDefault();
 
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    fetch('http://localhost:5000/auth/login', {
+    apiFetch('/auth/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: email, 
-        password:password
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Success:', data)
-      localStorage.setItem('token', data.access_token);
+      data: {
+        email: email,
+        password: password
+      }
+    }).then(response => {
+      console.log('Success:', response.data)
     })
     .catch(e => {
       console.error('Error when logging in:', e);
@@ -31,23 +27,19 @@ function TryRegister(event){
   const username = document.getElementById("regUsername").value;
   const password = document.getElementById("regPassword").value;
 
-  fetch('http://localhost:5000/auth/register', {
+  apiFetch('/auth/register', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: email, 
+      data: {
+        email: email,
         username: username,
         password: password
-      })
+      }
     })
-    .then(response => response.json())
-    .then(data => {
-      console.log(data)
+    .then(response => {
+      console.log(response.data)
     })
     .catch(e => {
-      console.error('Error when logging in:', e);
+      console.error('Error when registering:', e);
     })
 }
 

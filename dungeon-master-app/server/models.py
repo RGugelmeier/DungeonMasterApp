@@ -3,6 +3,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 import datetime, enum
 from server.database import db
 
+class UserTypes(enum.Enum):
+    STANDARD = "standard"
+    ADMIN = "admin"
+
 class Users(db.Model):
     __tablename__ = "users"
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -10,7 +14,8 @@ class Users(db.Model):
     email: Mapped[str] = mapped_column(VARCHAR(255))
     password_hashed: Mapped[str] = mapped_column(VARCHAR(60))
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, onupdate=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now(), onupdate=func.now())
+    user_type: Mapped[UserTypes] = mapped_column(Enum(UserTypes), default=UserTypes.STANDARD)
 
 class Campaigns(db.Model):
     __tablename__ = "campaigns"
@@ -35,7 +40,7 @@ class Notebooks(db.Model):
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, onupdate=func.now())
 
-class ChapterCategorys(enum.Enum):
+class ChapterCategories(enum.Enum):
     CHARACTER = "character"
     SESSION = "session"
     PLACE = "place"
@@ -46,7 +51,7 @@ class Chapters(db.Model):
     chapter_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     notebook_id: Mapped[int] = mapped_column(Integer, ForeignKey("notebooks.notebook_id"))
     chapter_name: Mapped[str] = mapped_column(VARCHAR(80))
-    chapter_category: Mapped[ChapterCategorys] = mapped_column(Enum(ChapterCategorys))
+    chapter_category: Mapped[ChapterCategories] = mapped_column(Enum(ChapterCategories))
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, onupdate=func.now())
 
