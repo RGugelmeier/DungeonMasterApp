@@ -1,6 +1,10 @@
-import { apiFetch } from "./API/apiClient";
+import { apiFetch } from "../API/apiClient";
+import { useNavigate } from 'react-router-dom';
 
-function TryLogin(event){
+function Login() {
+  const navigate = useNavigate();
+
+  function TryLogin(event){
     event.preventDefault();
 
     const email = document.getElementById("email").value;
@@ -14,36 +18,41 @@ function TryLogin(event){
       }
     }).then(response => {
       console.log('Success:', response.data)
+      if (response.data.user_type === 'admin') {
+        navigate('/admin-dashboard')
+      }
+      else {
+        navigate('/user-dashboard')
+      }
     })
     .catch(e => {
       console.error('Error when logging in:', e);
     })
-}
+  }
 
-function TryRegister(event){
-  event.preventDefault();
+  function TryRegister(event){
+    event.preventDefault();
 
-  const email = document.getElementById("regEmail").value;
-  const username = document.getElementById("regUsername").value;
-  const password = document.getElementById("regPassword").value;
+    const email = document.getElementById("regEmail").value;
+    const username = document.getElementById("regUsername").value;
+    const password = document.getElementById("regPassword").value;
 
-  apiFetch('/auth/register', {
-      method: 'POST',
-      data: {
-        email: email,
-        username: username,
-        password: password
-      }
-    })
-    .then(response => {
-      console.log(response.data)
-    })
-    .catch(e => {
-      console.error('Error when registering:', e);
-    })
-}
+    apiFetch('/auth/register', {
+        method: 'POST',
+        data: {
+          email: email,
+          username: username,
+          password: password
+        }
+      })
+      .then(response => {
+        console.log(response.data)
+      })
+      .catch(e => {
+        console.error('Error when registering:', e);
+      })
+  }
 
-function Login() {
   return (
     <div>
       <h1>Login</h1>
@@ -70,7 +79,6 @@ function Login() {
         <input type="submit" value="Register"/>
       </form>
     </div>
-    
   )
 }
 

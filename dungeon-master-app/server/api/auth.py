@@ -27,7 +27,7 @@ def refresh_expiring_jwts(response):
 @auth_bp.get("/me")
 @jwt_required()
 def me():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     result = Users.query.filter((Users.user_id == user_id)).first()
     return jsonify({
         'user_id': result.user_id,
@@ -68,11 +68,13 @@ def register_new_user():
         }), 201
     except Exception as e:
         db.session.rollback()
+        print(f"Registration error: {e}")
         return jsonify({'error': 'Registration failed'}), 500
 
 # Attempts a login. First checks if the user with given email exists in the db.
 # If it does, check to see if the hashed password in the db matches the entered password.
-# Finally, if the user logs in successfully, creates a jwt and returns it to the client. It also sets the access cookie, which is where the JWT is sent
+# Finally, if the user logs in successfully, creates a jwt and returns it to the client. It also sets the access cookie, which is what the JWT is sent in.
+# The JWT uses a string version of user_id as the identity because Flask-jwt-extended's @jwt_required() requires a string when attempting to decode the JWT to find the data.
 @auth_bp.post("/login")
 def login():
     data = request.get_json()
@@ -84,9 +86,10 @@ def login():
     if login_attempt:
         if bcrypt.checkpw(data['password'].encode('utf-8'), login_attempt.password_hashed.encode('utf-8')):
             response = jsonify({
-                'Status': "Login successful!"
+                'Status': "Login successful!",
+                'user_type': login_attempt.user_type.value
             })
-            access_token = create_access_token(identity=login_attempt.user_id)
+            access_token = create_access_token(identity=str(login_attempt.user_id))
             set_access_cookies(response, access_token)
             return response, 200
     return jsonify({"error": "Invalid email or password"}), 401

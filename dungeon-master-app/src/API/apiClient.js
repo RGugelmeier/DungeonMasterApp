@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // This creates an apiClient that can be used across all frontend components, which makes it easy to change the url when needed.
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_URL, //TODO: Change this to my deployed server when swapping to production 
+    baseURL: '/', //TODO: Change this to my deployed server when swapping to production 
     withCredentials: true
 })
 
