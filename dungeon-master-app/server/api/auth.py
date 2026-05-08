@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime, timezone
+import re
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt, get_jwt_identity, set_access_cookies, unset_jwt_cookies
 from server.models import Users
@@ -6,6 +7,9 @@ import bcrypt
 from server.database import db
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+
+# Basic email format check for server-side validation.
+EMAIL_REGEX = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
 # This runs after every request due to "after_app_request" and checks to see if a JWT is expiring in the next 10 minutes.
 # If it is, it sets access_token as a new JWT
@@ -23,7 +27,6 @@ def refresh_expiring_jwts(response):
     except(RuntimeError, KeyError):
         return response
 
-# Used to get all
 @auth_bp.get("/me")
 @jwt_required()
 def me():
@@ -35,7 +38,7 @@ def me():
         'email': result.email,
         'created_at': result.created_at,
         'updated_at': result.updated_at,
-        'user_type': result.user_type
+        'user_type': result.user_type.value
     })
 
 # Register a new user.
@@ -47,16 +50,26 @@ def register_new_user():
     data = request.get_json()
     if not data or 'username' not in data or 'email' not in data or 'password' not in data:
         return jsonify({'error': 'Invalid data when registering user'}), 400
+
+    username = data['username'].strip()
+    email = data['email'].strip().lower()
+    password = data['password']
+
+    if not EMAIL_REGEX.fullmatch(email):
+        return jsonify({'error': 'Invalid email format'}), 400
+
+    if not username:
+        return jsonify({'error': 'Username cannot be empty'}), 400
     
-    if len(data['password']) < 8:
+    if len(password) < 8:
         return jsonify({'error': 'Password too short'}), 400
 
-    existing_user = Users.query.filter((Users.username == data['username'])| (Users.email == data['email'])).first()
+    existing_user = Users.query.filter((Users.username == username)| (Users.email == email)).first()
     if existing_user:
         return jsonify({'error': 'Username or email already in use'}), 409
     try:
-        password_hashed = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        new_user = Users(username=data['username'], email=data['email'], password_hashed=password_hashed)
+        password_hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        new_user = Users(username=username, email=email, password_hashed=password_hashed)
         db.session.add(new_user)
         db.session.commit()
         return jsonify({

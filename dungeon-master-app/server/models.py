@@ -61,6 +61,7 @@ class Pages(db.Model):
     chapter_id: Mapped[int] = mapped_column(Integer, ForeignKey("chapters.chapter_id"))
     page_name: Mapped[str] = mapped_column(VARCHAR(80))
     page_content: Mapped[str] = mapped_column(TEXT)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, onupdate=func.now())
 
@@ -70,6 +71,8 @@ class PlayerCharacters(db.Model):
     campaign_id: Mapped[int] = mapped_column(Integer, ForeignKey("campaigns.campaign_id"))
     owning_player: Mapped[str] = mapped_column(VARCHAR(50))
     character_name: Mapped[str] = mapped_column(VARCHAR(50))
+    hp: Mapped[int] = mapped_column(Integer, default=0)
+    ac: Mapped[int] = mapped_column(Integer, default=0)
     strength: Mapped[int] = mapped_column(Integer)
     dexterity: Mapped[int] = mapped_column(Integer)
     constitution: Mapped[int] = mapped_column(Integer)
@@ -80,7 +83,7 @@ class PlayerCharacters(db.Model):
     abilities: Mapped[dict] = mapped_column(JSON)
     spells: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, onupdate=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now(), onupdate=func.now())
 
 class NonPlayerCharacters(db.Model):
     __tablename__ = "non_player_characters"
@@ -88,6 +91,8 @@ class NonPlayerCharacters(db.Model):
     campaign_id: Mapped[int] = mapped_column(Integer, ForeignKey("campaigns.campaign_id"))
     owning_player: Mapped[str] = mapped_column(VARCHAR(50))
     character_name: Mapped[str] = mapped_column(VARCHAR(50))
+    hp: Mapped[int] = mapped_column(Integer, default=0)
+    ac: Mapped[int] = mapped_column(Integer, default=0)
     strength: Mapped[int] = mapped_column(Integer)
     dexterity: Mapped[int] = mapped_column(Integer)
     constitution: Mapped[int] = mapped_column(Integer)
@@ -98,4 +103,12 @@ class NonPlayerCharacters(db.Model):
     abilities: Mapped[dict] = mapped_column(JSON)
     spells: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, onupdate=func.now())
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now(), onupdate=func.now())
+
+class CharacterPageLinks(db.Model):
+    __tablename__ = "character_page_links"
+    link_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    character_id: Mapped[int] = mapped_column(Integer)
+    character_type: Mapped[str] = mapped_column(VARCHAR(10))  # 'pc' or 'npc'
+    page_id: Mapped[int] = mapped_column(Integer, ForeignKey("pages.page_id"))
+

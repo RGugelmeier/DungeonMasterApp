@@ -1,21 +1,24 @@
 import {
-  Box,
-  Flex,
-  Text
+    Text,
+    Box,
+    Button,
+    Flex
 } from "@chakra-ui/react";
-import GameSelectionCard from '../components/GameSelectionCard'
 import LogoutButton from "../components/LogoutButton";
+import AIConversation from "../components/AIConversation";
+import MainWindow from "../components/CampaignDashboardMainWindow";
+import { useParams } from "react-router-dom";
 
 function Dashboard(){
+    const { campaignId } = useParams()
     return (
     <Flex
         minH="100vh"
         bg="#CBBD93"
-        align="center"
+        align="flex-start"
         justify="center"
         position="relative"
     >
-        <GameSelectionCard/>
         <Box position="absolute" top="20px" right="20px">
             <LogoutButton/>
         </Box>
@@ -25,6 +28,10 @@ function Dashboard(){
             Logo
             </Text>
         </Box>
+        <Flex pt="7vh" align="flex-start" justify="center" w="full">
+            <AIConversation campaignId={campaignId}/>
+            <MainWindow campaignId={campaignId}/>
+        </Flex>
     </Flex>
     )
 }

@@ -2,6 +2,7 @@ import './App.css'
 import Login from './pages/Login.jsx'
 import AdminDashboard from './pages/AdminDashboard.jsx'
 import UserDashboard from './pages/UserDashboard.jsx'
+import CampaignDashboard from './pages/CampaignDashboard.jsx'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
         <Route path="/" element={<Login/>}/>
         <Route path="/admin-dashboard" element={<AdminDashboard/>}/>
         <Route path="/user-dashboard" element={<UserDashboard/>}/>
+        <Route path="/campaign-dashboard/:campaignId" element={<CampaignDashboard/>}/>
       </Routes>
     </BrowserRouter>
   )
