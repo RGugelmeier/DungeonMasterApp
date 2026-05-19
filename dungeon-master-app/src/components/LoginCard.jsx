@@ -9,9 +9,9 @@ import {
   Text,
   Heading,
   VStack,
-  Link
 } from "@chakra-ui/react";
 import RegisterModal from './RegisterModal';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 function LoginCard() {
   const navigate = useNavigate();
@@ -81,7 +81,7 @@ function LoginCard() {
 
             {/* Actions */}
             <Flex width="100%" justify="space-between">
-                <Link fontSize="sm">Forgot password</Link>
+                <ForgotPasswordModal />
               <RegisterModal />
             </Flex>
             </VStack>

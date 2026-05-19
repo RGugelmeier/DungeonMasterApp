@@ -16,6 +16,8 @@ class Users(db.Model):
     created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now(), onupdate=func.now())
     user_type: Mapped[UserTypes] = mapped_column(Enum(UserTypes), default=UserTypes.STANDARD)
+    reset_token: Mapped[str | None] = mapped_column(VARCHAR(100), nullable=True)
+    reset_token_expiry: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP, nullable=True)
 
 class Campaigns(db.Model):
     __tablename__ = "campaigns"
@@ -110,5 +112,5 @@ class CharacterPageLinks(db.Model):
     link_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     character_id: Mapped[int] = mapped_column(Integer)
     character_type: Mapped[str] = mapped_column(VARCHAR(10))  # 'pc' or 'npc'
-    page_id: Mapped[int] = mapped_column(Integer, ForeignKey("pages.page_id"))
+    page_id: Mapped[int] = mapped_column(Integer, ForeignKey("pages.page_id", ondelete="CASCADE"))
 

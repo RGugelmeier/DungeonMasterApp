@@ -2,6 +2,7 @@ from datetime import timedelta
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_mail import Mail
 from dotenv import load_dotenv
 import os
 from pathlib import Path
@@ -10,6 +11,9 @@ env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path, override=True)
 
 from server.database import db
+
+mail = Mail()
+
 from server.api.users import users_bp
 from server.api.auth import auth_bp
 from server.api.notes import notes_bp
@@ -19,6 +23,14 @@ from server.api.characters import characters_bp
 # Sets up the server app
 def create_app():
     app = Flask(__name__)
+
+    app.config['MAIL_SERVER'] = os.environ['MAIL_SERVER']
+    app.config['MAIL_PORT'] = int(os.environ['MAIL_PORT'])
+    app.config['MAIL_USE_TLS'] = True
+    app.config['MAIL_USERNAME'] = os.environ['MAIL_USERNAME']
+    app.config['MAIL_PASSWORD'] = os.environ['MAIL_PASSWORD']
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ['MAIL_DEFAULT_SENDER']
+    mail.init_app(app)
 
     # JWT config
     app.config["JWT_COOKIE_SECURE"] = False  # TODO: When switching to production, change this to true.

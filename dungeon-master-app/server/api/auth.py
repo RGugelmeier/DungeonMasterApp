@@ -5,6 +5,8 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt, get_j
 from server.models import Users
 import bcrypt
 from server.database import db
+import secrets
+from server.api.services.mail_service import send_reset_email
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -117,3 +119,45 @@ def logout():
     response = jsonify({'Status': 'Logout successful'})
     unset_jwt_cookies(response)
     return response, 200
+
+# This creates a reset token and sends it to a user's email through services/mail_service.py
+# secrets is used to generate a random token which is then assigned to the user in the db for matching later
+@auth_bp.post("/forgot-password")
+def forgot_password():
+    data = request.get_json()
+    if not data or 'email' not in data:
+        return jsonify({'error': 'Email required'}), 400
+
+    user = Users.query.filter_by(email=data['email'].strip().lower()).first()
+    # Always return 200 to avoid revealing whether the email exists
+    if user:
+        token = secrets.token_urlsafe(32)
+        user.reset_token = token
+        user.reset_token_expiry = datetime.now(timezone.utc) + timedelta(minutes=30)
+        db.session.commit()
+        send_reset_email(user.email, token)
+
+    return jsonify({'status': 'If that email exists, a reset link has been sent.'}), 200
+
+# This actually resets the user's password. This is where reset token verification takes place. 
+# First, it checks to see that a token and new password is found in the incoming data
+# Next, it finds the user's token assigned in the db, and checks if it matches the token in the incoming data and that it has not expired
+# Finally, it performs password difficulty verification and resets the password after hashing it and removing the token from the user's db entry
+@auth_bp.post("/reset-password")
+def reset_password():
+    data = request.get_json()
+    if not data or 'token' not in data or 'password' not in data:
+        return jsonify({'error': 'Token and password required'}), 400
+
+    user = Users.query.filter_by(reset_token=data['token']).first()
+    if not user or user.reset_token_expiry < datetime.now(timezone.utc).replace(tzinfo=None):
+        return jsonify({'error': 'Invalid or expired token'}), 400
+
+    if len(data['password']) < 8:
+        return jsonify({'error': 'Password too short'}), 400
+
+    user.password_hashed = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    user.reset_token = None
+    user.reset_token_expiry = None
+    db.session.commit()
+    return jsonify({'status': 'Password updated successfully'}), 200

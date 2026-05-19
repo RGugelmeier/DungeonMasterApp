@@ -21,6 +21,40 @@ def get_campaigns():
         'updated_at': c.updated_at
     } for c in campaigns]), 200
 
+@notes_bp.post("/add_campaign")
+@jwt_required()
+def add_campaign():
+    user_id = int(get_jwt_identity())
+    data = request.get_json()
+    if not data or not data.get('campaign_name', '').strip():
+        return jsonify({'error': 'Campaign name is required'}), 400
+    new_campaign = Campaigns(
+        user_id=user_id,
+        campaign_name=data['campaign_name'].strip(),
+        campaign_description=data.get('campaign_description', '').strip()
+    )
+    db.session.add(new_campaign)
+    db.session.commit()
+    return jsonify({
+        'campaign_id': new_campaign.campaign_id,
+        'campaign_name': new_campaign.campaign_name,
+        'campaign_description': new_campaign.campaign_description
+    }), 201
+
+@notes_bp.delete("/delete_campaign")
+@jwt_required()
+def delete_campaign():
+    user_id = int(get_jwt_identity())
+    data = request.get_json()
+    if not data or 'campaign_id' not in data:
+        return jsonify({'error': 'campaign_id required'}), 400
+    campaign = Campaigns.query.filter_by(campaign_id=data['campaign_id'], user_id=user_id).first()
+    if not campaign:
+        return jsonify({'error': 'Campaign not found'}), 404
+    db.session.delete(campaign)
+    db.session.commit()
+    return jsonify({'status': 'Campaign deleted'}), 200
+
 # This function retrieves all notebooks, chapters, and pages for a campaign.
 # Used to populate the NotesDashboard tree and to give the AI access to note content.
 def fetch_campaign_notes(campaign_id):
