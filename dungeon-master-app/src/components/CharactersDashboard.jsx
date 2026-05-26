@@ -24,8 +24,8 @@ const STAT_FIELDS = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelli
 const STAT_LABELS = { strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT', charisma: 'CHA' }
 
 const EMPTY_CHAR = {
-    character_name: '', owning_player: '',
-    hp: 0, ac: 0,
+    character_name: '', owning_player: '', level: 1, race: '', char_class: '',
+    hp: 0, max_hp: 0, ac: 0, speed: 30, passive_perception: 10, proficiency_bonus: 2,
     strength: 10, dexterity: 10, constitution: 10,
     wisdom: 10, intelligence: 10, charisma: 10,
     inventory: {}, abilities: {}, spells: {}
@@ -44,6 +44,59 @@ function StatBox({ label, value, editable, onChange }) {
     )
 }
 
+function normalizeKVList(val) {
+    if (!val || (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length === 0)) return []
+    if (Array.isArray(val)) return val
+    return Object.entries(val).map(([name, value]) => ({ name, value: String(value) }))
+}
+
+function KeyValueList({ label, values, editable, onChange }) {
+    const items = normalizeKVList(values)
+    const handleChange = (idx, field, val) => onChange(items.map((item, i) => i === idx ? { ...item, [field]: val } : item))
+    const handleAdd = () => onChange([...items, { name: '', value: '' }])
+    const handleRemove = (idx) => onChange(items.filter((_, i) => i !== idx))
+    return (
+        <Box>
+            <HStack mb={1} justify="space-between">
+                <Text fontWeight="semibold" textTransform="capitalize">{label}</Text>
+                {editable && (
+                    <IconButton size="xs" variant="ghost" aria-label={`Add ${label} item`} onClick={handleAdd}>
+                        <LuPlus />
+                    </IconButton>
+                )}
+            </HStack>
+            <Box border="1px solid" borderColor="gray.200" borderRadius="md" overflow="hidden" minH="80px" bg="white">
+                {items.length === 0 ? (
+                    <Flex h="80px" align="center" justify="center">
+                        <Text fontSize="sm" color="gray.400">None</Text>
+                    </Flex>
+                ) : (
+                    <VStack gap={0} alignItems="stretch">
+                        {items.map((item, idx) => (
+                            <HStack key={idx} px={2} py={1} borderBottomWidth={idx < items.length - 1 ? "1px" : "0"} borderColor="gray.100" gap={2}>
+                                {editable ? (
+                                    <>
+                                        <Input size="xs" value={item.name} placeholder="Name" onChange={e => handleChange(idx, 'name', e.target.value)} w="100px" />
+                                        <Input size="xs" value={item.value} placeholder="Description" onChange={e => handleChange(idx, 'value', e.target.value)} flex="1" />
+                                        <IconButton size="xs" variant="ghost" colorPalette="red" aria-label="Remove" onClick={() => handleRemove(idx)}>
+                                            <LuTrash2 />
+                                        </IconButton>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text fontSize="sm" fontWeight="medium" w="100px" flexShrink={0}>{item.name}</Text>
+                                        <Text fontSize="sm" color="gray.600" flex="1">{item.value}</Text>
+                                    </>
+                                )}
+                            </HStack>
+                        ))}
+                    </VStack>
+                )}
+            </Box>
+        </Box>
+    )
+}
+
 function CharacterSheet({ character, editable, onChange, linkedPages, onNavigateToPage, onAddLink, onRemoveLink, allPages }) {
     if (!character) return (
         <Flex w="100%" h="100%" align="center" justify="center">
@@ -55,8 +108,9 @@ function CharacterSheet({ character, editable, onChange, linkedPages, onNavigate
 
     return (
         <VStack align="stretch" p={4} gap={4} overflowY="auto" h="100%">
-            <HStack gap={4}>
-                <VStack align="start" flex="1" gap={1}>
+            {/* Row 1: Identity */}
+            <HStack gap={4} flexWrap="wrap">
+                <VStack align="start" flex="1" gap={1} minW="160px">
                     <Text fontSize="xs" color="gray.500">Character Name</Text>
                     {editable
                         ? <Input value={character.character_name} onChange={e => set('character_name')(e.target.value)} />
@@ -71,6 +125,30 @@ function CharacterSheet({ character, editable, onChange, linkedPages, onNavigate
                     }
                 </VStack>
                 <VStack align="start" gap={1}>
+                    <Text fontSize="xs" color="gray.500">Level</Text>
+                    {editable
+                        ? <Input w="60px" type="number" value={character.level ?? 1} onChange={e => set('level')(parseInt(e.target.value) || 1)} />
+                        : <Text fontWeight="bold">{character.level ?? 1}</Text>
+                    }
+                </VStack>
+                <VStack align="start" gap={1}>
+                    <Text fontSize="xs" color="gray.500">Race</Text>
+                    {editable
+                        ? <Input value={character.race ?? ''} onChange={e => set('race')(e.target.value)} />
+                        : <Text>{character.race || '—'}</Text>
+                    }
+                </VStack>
+                <VStack align="start" gap={1}>
+                    <Text fontSize="xs" color="gray.500">Class</Text>
+                    {editable
+                        ? <Input value={character.char_class ?? ''} onChange={e => set('char_class')(e.target.value)} />
+                        : <Text>{character.char_class || '—'}</Text>
+                    }
+                </VStack>
+            </HStack>
+            {/* Row 2: Combat stats */}
+            <HStack gap={4} flexWrap="wrap">
+                <VStack align="start" gap={1}>
                     <Text fontSize="xs" color="gray.500">HP</Text>
                     {editable
                         ? <Input w="70px" type="number" value={character.hp} onChange={e => set('hp')(parseInt(e.target.value) || 0)} />
@@ -78,10 +156,38 @@ function CharacterSheet({ character, editable, onChange, linkedPages, onNavigate
                     }
                 </VStack>
                 <VStack align="start" gap={1}>
+                    <Text fontSize="xs" color="gray.500">Max HP</Text>
+                    {editable
+                        ? <Input w="70px" type="number" value={character.max_hp ?? 0} onChange={e => set('max_hp')(parseInt(e.target.value) || 0)} />
+                        : <Text fontWeight="bold">{character.max_hp ?? 0}</Text>
+                    }
+                </VStack>
+                <VStack align="start" gap={1}>
                     <Text fontSize="xs" color="gray.500">AC</Text>
                     {editable
                         ? <Input w="70px" type="number" value={character.ac} onChange={e => set('ac')(parseInt(e.target.value) || 0)} />
                         : <Text fontWeight="bold">{character.ac}</Text>
+                    }
+                </VStack>
+                <VStack align="start" gap={1}>
+                    <Text fontSize="xs" color="gray.500">Speed</Text>
+                    {editable
+                        ? <Input w="70px" type="number" value={character.speed ?? 30} onChange={e => set('speed')(parseInt(e.target.value) || 0)} />
+                        : <Text fontWeight="bold">{character.speed ?? 30} ft</Text>
+                    }
+                </VStack>
+                <VStack align="start" gap={1}>
+                    <Text fontSize="xs" color="gray.500">Passive Perc.</Text>
+                    {editable
+                        ? <Input w="70px" type="number" value={character.passive_perception ?? 10} onChange={e => set('passive_perception')(parseInt(e.target.value) || 0)} />
+                        : <Text fontWeight="bold">{character.passive_perception ?? 10}</Text>
+                    }
+                </VStack>
+                <VStack align="start" gap={1}>
+                    <Text fontSize="xs" color="gray.500">Prof. Bonus</Text>
+                    {editable
+                        ? <Input w="70px" type="number" value={character.proficiency_bonus ?? 2} onChange={e => set('proficiency_bonus')(parseInt(e.target.value) || 0)} />
+                        : <Text fontWeight="bold">+{character.proficiency_bonus ?? 2}</Text>
                     }
                 </VStack>
             </HStack>
@@ -98,31 +204,13 @@ function CharacterSheet({ character, editable, onChange, linkedPages, onNavigate
 
             <SimpleGrid columns={3} gap={4}>
                 {['inventory', 'abilities', 'spells'].map(field => (
-                    <Box key={field}>
-                        <Text fontWeight="semibold" mb={1} textTransform="capitalize">{field}</Text>
-                        {editable
-                            ? <Input
-                                as="textarea"
-                                value={typeof character[field] === 'object'
-                                    ? JSON.stringify(character[field], null, 2) : character[field]}
-                                onChange={e => {
-                                    try { set(field)(JSON.parse(e.target.value)) }
-                                    catch { set(field)(e.target.value) }
-                                }}
-                                minH="80px"
-                                fontFamily="mono"
-                                fontSize="xs"
-                            />
-                            : <Box bg="white" borderRadius="md" p={2} minH="80px" fontSize="sm" border="1px solid" borderColor="gray.200">
-                                {typeof character[field] === 'object' && Object.keys(character[field]).length === 0
-                                    ? <Text color="gray.400">None</Text>
-                                    : <pre style={{whiteSpace: 'pre-wrap', fontSize: '12px'}}>
-                                        {JSON.stringify(character[field], null, 2)}
-                                      </pre>
-                                }
-                              </Box>
-                        }
-                    </Box>
+                    <KeyValueList
+                        key={field}
+                        label={field}
+                        values={character[field]}
+                        editable={editable}
+                        onChange={set(field)}
+                    />
                 ))}
             </SimpleGrid>
 
@@ -181,9 +269,11 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
     const [addType, setAddType] = useState(null)
     const [linkedPages, setLinkedPages] = useState([])
     const [allPages, setAllPages] = useState([])
+    const [hoveredCharId, setHoveredCharId] = useState(null)
+    const [deleteTarget, setDeleteTarget] = useState(null)
     const [newCharData, setNewCharData] = useState({
-        character_name: '', owning_player: '',
-        hp: 0, ac: 0,
+        character_name: '', owning_player: '', level: 1, race: '', char_class: '',
+        hp: 0, max_hp: 0, ac: 0, speed: 30, passive_perception: 10, proficiency_bonus: 2,
         strength: 10, dexterity: 10, constitution: 10,
         wisdom: 10, intelligence: 10, charisma: 10,
     })
@@ -331,6 +421,29 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
         }
     }
 
+    const handleDeleteCharacter = async () => {
+        if (!deleteTarget) return
+        try {
+            await apiFetch("/characters/delete_character", {
+                method: "DELETE",
+                data: { character_id: deleteTarget.char.character_id, type: deleteTarget.type }
+            })
+            if (deleteTarget.type === 'pc') {
+                setPcs(prev => prev.filter(c => c.character_id !== deleteTarget.char.character_id))
+            } else {
+                setNpcs(prev => prev.filter(c => c.character_id !== deleteTarget.char.character_id))
+            }
+            if (selectedChar?.character_id === deleteTarget.char.character_id) {
+                setSelectedChar(null)
+                setEditBuffer(null)
+                setLinkedPages([])
+            }
+            setDeleteTarget(null)
+        } catch (e) {
+            console.error("Failed to delete character:", e)
+        }
+    }
+
     return (
         <HStack w="100%" h="100%" alignItems="stretch" overflow="hidden">
             <VStack w="20%" h="100%" alignItems="stretch" gap={0}>
@@ -352,8 +465,8 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
                                             e.stopPropagation()
                                             setAddType(node.value === 'pcs' ? 'pc' : 'npc')
                                             setNewCharData({
-                                                character_name: '', owning_player: '',
-                                                hp: 0, ac: 0,
+                                                character_name: '', owning_player: '', level: 1, race: '', char_class: '',
+                                                hp: 0, max_hp: 0, ac: 0, speed: 30, passive_perception: 10, proficiency_bonus: 2,
                                                 strength: 10, dexterity: 10, constitution: 10,
                                                 wisdom: 10, intelligence: 10, charisma: 10,
                                             })
@@ -362,9 +475,30 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
                                     </IconButton>
                                 </TreeView.BranchControl>
                             ) : (
-                                <TreeView.Item onClick={() => handleSelectChar(node.value)}>
+                                <TreeView.Item
+                                    onClick={() => handleSelectChar(node.value)}
+                                    onMouseEnter={() => setHoveredCharId(node.value)}
+                                    onMouseLeave={() => setHoveredCharId(null)}
+                                >
                                     <LuUser />
                                     <TreeView.ItemText>{node.label}</TreeView.ItemText>
+                                    {hoveredCharId === node.value && (
+                                        <IconButton
+                                            size="xs" variant="ghost" colorPalette="red"
+                                            aria-label="Delete character"
+                                            ml="auto"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                const [type, idStr] = node.value.split('-')
+                                                const id = parseInt(idStr)
+                                                const list = type === 'pc' ? pcs : npcs
+                                                const char = list.find(c => c.character_id === id)
+                                                if (char) setDeleteTarget({ char, type })
+                                            }}
+                                        >
+                                            <LuTrash2 />
+                                        </IconButton>
+                                    )}
                                 </TreeView.Item>
                             )}
                         />
@@ -430,16 +564,53 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
                                     value={newCharData.owning_player}
                                     onChange={e => setNewField('owning_player')(e.target.value)}
                                 />
-                                <HStack gap={4}>
+                                <HStack gap={3}>
+                                    <VStack align="start" gap={1} flex="1">
+                                        <Text fontSize="xs" color="gray.500">Level</Text>
+                                        <Input type="number" value={newCharData.level}
+                                            onChange={e => setNewField('level')(parseInt(e.target.value) || 1)} />
+                                    </VStack>
+                                    <VStack align="start" gap={1} flex="2">
+                                        <Text fontSize="xs" color="gray.500">Race</Text>
+                                        <Input value={newCharData.race}
+                                            onChange={e => setNewField('race')(e.target.value)} />
+                                    </VStack>
+                                    <VStack align="start" gap={1} flex="2">
+                                        <Text fontSize="xs" color="gray.500">Class</Text>
+                                        <Input value={newCharData.char_class}
+                                            onChange={e => setNewField('char_class')(e.target.value)} />
+                                    </VStack>
+                                </HStack>
+                                <HStack gap={3}>
                                     <VStack align="start" gap={1} flex="1">
                                         <Text fontSize="xs" color="gray.500">HP</Text>
                                         <Input type="number" value={newCharData.hp}
                                             onChange={e => setNewField('hp')(parseInt(e.target.value) || 0)} />
                                     </VStack>
                                     <VStack align="start" gap={1} flex="1">
+                                        <Text fontSize="xs" color="gray.500">Max HP</Text>
+                                        <Input type="number" value={newCharData.max_hp}
+                                            onChange={e => setNewField('max_hp')(parseInt(e.target.value) || 0)} />
+                                    </VStack>
+                                    <VStack align="start" gap={1} flex="1">
                                         <Text fontSize="xs" color="gray.500">AC</Text>
                                         <Input type="number" value={newCharData.ac}
                                             onChange={e => setNewField('ac')(parseInt(e.target.value) || 0)} />
+                                    </VStack>
+                                    <VStack align="start" gap={1} flex="1">
+                                        <Text fontSize="xs" color="gray.500">Speed (ft)</Text>
+                                        <Input type="number" value={newCharData.speed}
+                                            onChange={e => setNewField('speed')(parseInt(e.target.value) || 0)} />
+                                    </VStack>
+                                    <VStack align="start" gap={1} flex="1">
+                                        <Text fontSize="xs" color="gray.500">Passive Perc.</Text>
+                                        <Input type="number" value={newCharData.passive_perception}
+                                            onChange={e => setNewField('passive_perception')(parseInt(e.target.value) || 0)} />
+                                    </VStack>
+                                    <VStack align="start" gap={1} flex="1">
+                                        <Text fontSize="xs" color="gray.500">Prof. Bonus</Text>
+                                        <Input type="number" value={newCharData.proficiency_bonus}
+                                            onChange={e => setNewField('proficiency_bonus')(parseInt(e.target.value) || 0)} />
                                     </VStack>
                                 </HStack>
                                 <Text fontSize="sm" fontWeight="semibold" mt={1}>Ability Scores</Text>
@@ -463,6 +634,25 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
                                 onClick={handleAddCharacter}
                                 disabled={!newCharData.character_name.trim()}
                             >Create</Button>
+                        </Dialog.Footer>
+                        <Dialog.CloseTrigger />
+                    </Dialog.Content>
+                </Dialog.Positioner>
+            </Dialog.Root>
+
+            <Dialog.Root open={deleteTarget !== null} onOpenChange={(e) => { if (!e.open) setDeleteTarget(null) }}>
+                <Dialog.Backdrop />
+                <Dialog.Positioner>
+                    <Dialog.Content>
+                        <Dialog.Header>
+                            <Dialog.Title>Delete Character</Dialog.Title>
+                        </Dialog.Header>
+                        <Dialog.Body>
+                            <Text>Are you sure you want to delete <strong>{deleteTarget?.char?.character_name}</strong>? This cannot be undone.</Text>
+                        </Dialog.Body>
+                        <Dialog.Footer>
+                            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+                            <Button colorPalette="red" onClick={handleDeleteCharacter}>Delete</Button>
                         </Dialog.Footer>
                         <Dialog.CloseTrigger />
                     </Dialog.Content>

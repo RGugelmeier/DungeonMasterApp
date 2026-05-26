@@ -5,7 +5,8 @@ from flask_jwt_extended import jwt_required
 
 characters_bp = Blueprint("characters", __name__, url_prefix="/characters")
 
-CHAR_FIELDS = ['character_name', 'owning_player', 'hp', 'ac',
+CHAR_FIELDS = ['character_name', 'owning_player', 'level', 'race', 'char_class',
+               'hp', 'max_hp', 'ac', 'speed', 'passive_perception', 'proficiency_bonus',
                'strength', 'dexterity', 'constitution',
                'wisdom', 'intelligence', 'charisma',
                'inventory', 'abilities', 'spells']
@@ -16,8 +17,15 @@ def serialize_character(c, char_type):
         'type': char_type,
         'character_name': c.character_name,
         'owning_player': c.owning_player,
+        'level': c.level,
+        'race': c.race,
+        'char_class': c.char_class,
         'hp': c.hp,
+        'max_hp': c.max_hp,
         'ac': c.ac,
+        'speed': c.speed,
+        'passive_perception': c.passive_perception,
+        'proficiency_bonus': c.proficiency_bonus,
         'strength': c.strength,
         'dexterity': c.dexterity,
         'constitution': c.constitution,
@@ -56,7 +64,8 @@ def add_character():
         campaign_id=data['campaign_id'],
         character_name=data['character_name'],
         owning_player=data.get('owning_player', ''),
-        hp=0, ac=0,
+        hp=0, ac=0, max_hp=0, speed=30, passive_perception=10, proficiency_bonus=2,
+        level=1, race='', char_class='',
         strength=10, dexterity=10, constitution=10,
         wisdom=10, intelligence=10, charisma=10,
         inventory={}, abilities={}, spells={}
@@ -148,5 +157,19 @@ def delete_link():
     if not link:
         return jsonify({"error": "Link not found"}), 404
     db.session.delete(link)
+    db.session.commit()
+    return jsonify({"success": True}), 200
+
+@characters_bp.delete("/delete_character")
+@jwt_required()
+def delete_character():
+    data = request.get_json()
+    if not data or 'character_id' not in data or 'type' not in data:
+        return jsonify({"error": "character_id and type required"}), 400
+    Model = PlayerCharacters if data['type'] == 'pc' else NonPlayerCharacters
+    char = Model.query.get(data['character_id'])
+    if not char:
+        return jsonify({"error": "Character not found"}), 404
+    db.session.delete(char)
     db.session.commit()
     return jsonify({"success": True}), 200
