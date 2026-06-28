@@ -5,6 +5,7 @@ from google import genai
 from google.genai import types
 from server.api.notes import fetch_campaign_notes
 from server.api.characters import fetch_campaign_characters
+from server.database import db
 
 # Available Tools
 read_notes_function = types.FunctionDeclaration(
@@ -91,6 +92,9 @@ def ask():
 
         if tool_calls:
             contents.append(types.Content(role="model", parts=[types.Part(function_call=tc.function_call) for tc in tool_calls]))
+            # Expire the session's identity map so every DB query below reads
+            # the freshest committed data rather than any cached instance state.
+            db.session.expire_all()
             for tc in tool_calls:
                 if tc.function_call.name == "read_notes":
                     result = fetch_campaign_notes(active_campaign)
