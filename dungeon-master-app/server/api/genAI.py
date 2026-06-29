@@ -98,7 +98,23 @@ def ask():
         message = response.choices[0].message
 
         if message.tool_calls:
-            messages.append(message)
+            # Explicitly serialize the assistant message as a dict so
+            # OpenRouter/Claude receives properly structured tool_use blocks.
+            messages.append({
+                "role": "assistant",
+                "content": message.content,
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments
+                        }
+                    }
+                    for tc in message.tool_calls
+                ]
+            })
             db.session.expire_all()
 
             for tool_call in message.tool_calls:
