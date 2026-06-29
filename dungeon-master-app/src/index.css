@@ -7,3 +7,21 @@
 .save-success {
     animation: fadeOut 5s forwards;
 }
+
+/* Markdown rendering inside AI chat bubbles */
+.ai-message { font-size: 0.875rem; line-height: 1.6; }
+.ai-message p { margin: 0 0 0.5em 0; }
+.ai-message p:last-child { margin-bottom: 0; }
+.ai-message strong { font-weight: 700; }
+.ai-message em { font-style: italic; }
+.ai-message ul, .ai-message ol { padding-left: 1.25rem; margin: 0.25em 0 0.5em 0; }
+.ai-message li { margin-bottom: 0.15em; }
+.ai-message h1, .ai-message h2, .ai-message h3 { font-weight: 700; margin: 0.5em 0 0.25em 0; }
+.ai-message h1 { font-size: 1.1em; }
+.ai-message h2 { font-size: 1em; }
+.ai-message h3 { font-size: 0.95em; }
+.ai-message code { background: rgba(0,0,0,0.1); padding: 0.1em 0.3em; border-radius: 3px; font-family: monospace; font-size: 0.9em; }
+.ai-message pre { background: rgba(0,0,0,0.15); padding: 0.5em; border-radius: 4px; overflow-x: auto; margin: 0.4em 0; }
+.ai-message pre code { background: none; padding: 0; }
+.ai-message blockquote { border-left: 3px solid rgba(0,0,0,0.2); padding-left: 0.75em; margin: 0.4em 0; color: rgba(0,0,0,0.7); }
+.ai-message hr { border: none; border-top: 1px solid rgba(0,0,0,0.2); margin: 0.5em 0; }

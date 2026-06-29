@@ -1,3 +1,4 @@
+import ReactMarkdown from 'react-markdown';
 import
 {
     Box,
@@ -48,14 +49,17 @@ function AIConversation({ campaignId }) {
                     <VStack align="stretch" spacing={2}>
                         {messages.map((msg, i) => (
                             <HStack key={i} justify={msg.role === "user" ? "flex-end" : "flex-start"}>
-                                <Box
+                            <Box
                                     bg={msg.role === "user" ? "#C8A96E" : "#DDDBD3"}
                                     px={3}
                                     py={2}
                                     borderRadius="md"
                                     maxW="80%"
                                 >
-                                    <Text fontSize="sm">{msg.text}</Text>
+                                    {msg.role === "ai"
+                                        ? <ReactMarkdown className="ai-message">{msg.text}</ReactMarkdown>
+                                        : <Text fontSize="sm">{msg.text}</Text>
+                                    }
                                 </Box>
                             </HStack>
                         ))}
