@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 .env
+.env.bak
+.env.pi
 
 # Editor directories and files
 .vscode/*
