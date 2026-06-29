@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, VARCHAR, Enum, TIMESTAMP, TEXT, JSON, ForeignKey, func
+from sqlalchemy import Integer, VARCHAR, Enum, TIMESTAMP, TEXT, JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 import datetime, enum
 from server.database import db
@@ -13,8 +13,8 @@ class Users(db.Model):
     username: Mapped[str] = mapped_column(VARCHAR(60))
     email: Mapped[str] = mapped_column(VARCHAR(255))
     password_hashed: Mapped[str] = mapped_column(VARCHAR(60))
-    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now(), onupdate=func.now())
+    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now, onupdate=datetime.datetime.now)
     user_type: Mapped[UserTypes] = mapped_column(Enum(UserTypes), default=UserTypes.STANDARD)
     reset_token: Mapped[str | None] = mapped_column(VARCHAR(100), nullable=True)
     reset_token_expiry: Mapped[datetime.datetime | None] = mapped_column(TIMESTAMP, nullable=True)
@@ -25,8 +25,8 @@ class Campaigns(db.Model):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"))
     campaign_name: Mapped[str] = mapped_column(VARCHAR(255))
     campaign_description: Mapped[str] = mapped_column(TEXT)
-    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, onupdate=func.now())
+    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
 class Tags(db.Model):
     __tablename__ = "tags"
@@ -39,8 +39,8 @@ class Notebooks(db.Model):
     notebook_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     campaign_id: Mapped[int] = mapped_column(Integer, ForeignKey("campaigns.campaign_id"))
     notebook_name: Mapped[str] = mapped_column(VARCHAR(255))
-    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, onupdate=func.now())
+    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
 class ChapterCategories(enum.Enum):
     CHARACTER = "character"
@@ -54,8 +54,8 @@ class Chapters(db.Model):
     notebook_id: Mapped[int] = mapped_column(Integer, ForeignKey("notebooks.notebook_id"))
     chapter_name: Mapped[str] = mapped_column(VARCHAR(80))
     chapter_category: Mapped[ChapterCategories] = mapped_column(Enum(ChapterCategories))
-    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, onupdate=func.now())
+    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
 class Pages(db.Model):
     __tablename__ = "pages"
@@ -64,8 +64,8 @@ class Pages(db.Model):
     page_name: Mapped[str] = mapped_column(VARCHAR(80))
     page_content: Mapped[str] = mapped_column(TEXT)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, onupdate=func.now())
+    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
 class PlayerCharacters(db.Model):
     __tablename__ = "player_characters"
@@ -91,8 +91,8 @@ class PlayerCharacters(db.Model):
     inventory: Mapped[dict] = mapped_column(JSON)
     abilities: Mapped[dict] = mapped_column(JSON)
     spells: Mapped[dict] = mapped_column(JSON)
-    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now(), onupdate=func.now())
+    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
 class NonPlayerCharacters(db.Model):
     __tablename__ = "non_player_characters"
@@ -118,8 +118,8 @@ class NonPlayerCharacters(db.Model):
     inventory: Mapped[dict] = mapped_column(JSON)
     abilities: Mapped[dict] = mapped_column(JSON)
     spells: Mapped[dict] = mapped_column(JSON)
-    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now())
-    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=func.now(), onupdate=func.now())
+    created_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now)
+    updated_at: Mapped[datetime.datetime] = mapped_column(TIMESTAMP, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
 class CharacterPageLinks(db.Model):
     __tablename__ = "character_page_links"
@@ -127,4 +127,3 @@ class CharacterPageLinks(db.Model):
     character_id: Mapped[int] = mapped_column(Integer)
     character_type: Mapped[str] = mapped_column(VARCHAR(10))  # 'pc' or 'npc'
     page_id: Mapped[int] = mapped_column(Integer, ForeignKey("pages.page_id", ondelete="CASCADE"))
-
