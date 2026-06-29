@@ -19,9 +19,9 @@ function MainWindow ({ campaignId }) {
 
     return(
         <Flex direction="column" mx="25px">
-            <Flex justifyContent={"center"} mb="3px">
-                <Button mr="10vw" onClick={() => setDisplayMode("notebooks")}>Notebooks</Button>
-                <Button ml="10vw" onClick={() => setDisplayMode("characters")}>Characters</Button>
+            <Flex justifyContent={"flex-start"} mb="3px" gap="8px">
+                <Button onClick={() => setDisplayMode("notebooks")}>Notebooks</Button>
+                <Button onClick={() => setDisplayMode("characters")}>Characters</Button>
             </Flex>
             <Box bg="#FAE8B4" h="85vh" w="75vw">
                 {displayMode === "notebooks" && <NotesDashboard campaignId={campaignId} pageNavTarget={pageNavTarget} onPageNavConsumed={() => setPageNavTarget(null)}/>}

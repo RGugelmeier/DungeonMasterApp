@@ -19,6 +19,33 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../API/apiClient";
 import { Control, RichTextEditor } from "@/components/ui/rich-text-editor"
 import StarterKit from "@tiptap/starter-kit";
+import TextStyle from "@tiptap/extension-text-style";
+import Highlight from "@tiptap/extension-highlight";
+
+// Single TextStyle extension carrying both color and font-size so they stack correctly
+const RichTextStyle = TextStyle.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            fontSize: {
+                default: null,
+                parseHTML: element => element.style.fontSize || null,
+                renderHTML: attributes => {
+                    if (!attributes.fontSize) return {}
+                    return { style: `font-size: ${attributes.fontSize}` }
+                },
+            },
+            color: {
+                default: null,
+                parseHTML: element => element.style.color || null,
+                renderHTML: attributes => {
+                    if (!attributes.color) return {}
+                    return { style: `color: ${attributes.color}` }
+                },
+            },
+        }
+    },
+})
 import { useEditor } from "@tiptap/react"
 
 function ModePicker({ currentMode, onModeChange, width }) {
@@ -58,11 +85,14 @@ function NotesDashboard({ campaignId, pageNavTarget, onPageNavConsumed }) {
     const [editingNode, setEditingNode] = useState(null)
     const [editingName, setEditingName] = useState('')
     const [isDirty, setIsDirty] = useState(false)
+    const [saveLoading, setSaveLoading] = useState(false)
+    const [saveSuccess, setSaveSuccess] = useState(false)
     const [leftTab, setLeftTab] = useState('notes')
     const [tags, setTags] = useState([])
     const [newTagName, setNewTagName] = useState('')
     const [tagResults, setTagResults] = useState({})
     const [expandedTagId, setExpandedTagId] = useState(null)
+    const [dialogLoading, setDialogLoading] = useState(false)
 
     const loadNotes = async () => {
         try {
@@ -132,14 +162,20 @@ function NotesDashboard({ campaignId, pageNavTarget, onPageNavConsumed }) {
 
     const handleSave = async () => {
         if (!selectedPage || !editor) return
-        await apiFetch("/notes/save_page", {
-            method: "POST",
-            data: { page_id: parseInt(selectedPage), content: editor.getHTML() }
-        })
-        setPages(prev => prev.map(p =>
-            String(p.id) === selectedPage ? { ...p, content: editor.getHTML() } : p
-        ))
-        setIsDirty(false)
+        setSaveLoading(true)
+        try {
+            await apiFetch("/notes/save_page", {
+                method: "POST",
+                data: { page_id: parseInt(selectedPage), content: editor.getHTML() }
+            })
+            setPages(prev => prev.map(p =>
+                String(p.id) === selectedPage ? { ...p, content: editor.getHTML() } : p
+            ))
+            setIsDirty(false)
+            setSaveSuccess(true)
+        } finally {
+            setSaveLoading(false)
+        }
     }
 
     const handleAddNotebook = async () => {
@@ -258,11 +294,16 @@ function NotesDashboard({ campaignId, pageNavTarget, onPageNavConsumed }) {
         else if (confirmDelete.type === 'page') handleDeletePage(confirmDelete.id)
     }
 
-    const handleDialogSubmit = () => {
+    const handleDialogSubmit = async () => {
         if (!newItemName.trim()) return
-        if (dialogType === 'notebook') handleAddNotebook()
-        else if (dialogType === 'chapter') handleAddChapter()
-        else if (dialogType === 'page') handleAddPage()
+        setDialogLoading(true)
+        try {
+            if (dialogType === 'notebook') await handleAddNotebook()
+            else if (dialogType === 'chapter') await handleAddChapter()
+            else if (dialogType === 'page') await handleAddPage()
+        } finally {
+            setDialogLoading(false)
+        }
     }
 
     const handleAddTag = async () => {
@@ -330,7 +371,11 @@ function NotesDashboard({ campaignId, pageNavTarget, onPageNavConsumed }) {
     }), [notebooks, chapters, pages])
 
     const tree = createTreeCollection({ rootNode: treeData })
-    const extensions = useMemo(() => [StarterKit], [])
+    const extensions = useMemo(() => [
+        StarterKit,
+        RichTextStyle,
+        Highlight.configure({ multicolor: true }),
+    ], [])
     const editor = useEditor({
         extensions,
         content: "",
@@ -610,6 +655,11 @@ function NotesDashboard({ campaignId, pageNavTarget, onPageNavConsumed }) {
                             <Control.Italic />
                             <Control.Underline />
                         </RichTextEditor.ControlGroup>
+                        <RichTextEditor.ControlGroup inert={!editable} opacity={!editable ? 0.5 : 1}>
+                            <Control.FontSize />
+                            <Control.TextColor />
+                            <Control.Highlight />
+                        </RichTextEditor.ControlGroup>
                         <RichTextEditor.ControlGroup>
                             <ModePicker
                                 width="120px"
@@ -618,9 +668,14 @@ function NotesDashboard({ campaignId, pageNavTarget, onPageNavConsumed }) {
                             />
                         </RichTextEditor.ControlGroup>
                         <RichTextEditor.ControlGroup>
-                            <Button size="sm" variant="ghost" disabled={!selectedPage || !editable} onClick={handleSave}>
+                            <Button size="sm" variant="ghost" disabled={!selectedPage || !editable} onClick={handleSave} loading={saveLoading}>
                                 <LuSave /> Save
                             </Button>
+                            {saveSuccess && (
+                                <Text fontSize="xs" color="green.600" alignSelf="center" className="save-success" onAnimationEnd={() => setSaveSuccess(false)}>
+                                    Saved!
+                                </Text>
+                            )}
                         </RichTextEditor.ControlGroup>
                     </RichTextEditor.Toolbar>
                     <Box overflowY="auto" flex="1" minH="0" bg="white">
@@ -663,7 +718,7 @@ function NotesDashboard({ campaignId, pageNavTarget, onPageNavConsumed }) {
                         </Dialog.Body>
                         <Dialog.Footer>
                             <Button variant="outline" onClick={() => setDialogType(null)}>Cancel</Button>
-                            <Button onClick={handleDialogSubmit} disabled={!newItemName.trim()}>Create</Button>
+                            <Button onClick={handleDialogSubmit} disabled={!newItemName.trim()} loading={dialogLoading}>Create</Button>
                         </Dialog.Footer>
                         <Dialog.CloseTrigger />
                     </Dialog.Content>

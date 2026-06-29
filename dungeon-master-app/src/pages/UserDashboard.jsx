@@ -5,6 +5,7 @@ import {
 } from "@chakra-ui/react";
 import GameSelectionCard from '../components/GameSelectionCard'
 import LogoutButton from "../components/LogoutButton";
+import logo from '../assets/scrawler-logo.png';
 
 function Dashboard(){
     return (
@@ -20,10 +21,8 @@ function Dashboard(){
             <LogoutButton/>
         </Box>
         {/* Logo (top-left) */}
-        <Box position="absolute" top="20px" left="20px">
-            <Text bg="gray.200" p={2} borderRadius="md">
-            Logo
-            </Text>
+        <Box position="absolute" top="20px" left="20px" w={40} h={40}>
+            <img src={logo} alt="Scrawler Logo"/>
         </Box>
     </Flex>
     )

@@ -16,9 +16,11 @@ function RegisterModal(){
         const [email, setEmail] = useState('')
         const [username, setUsername] = useState('')
         const [password, setPassword] = useState('')
+        const [loading, setLoading] = useState(false)
 
     function TryRegister(event){
         event.preventDefault();
+        setLoading(true)
 
         apiFetch('/auth/register', {
             method: 'POST',
@@ -36,6 +38,7 @@ function RegisterModal(){
             console.error('Error when registering:', e);
             setShowErrorMessage(true)
         })
+        .finally(() => setLoading(false))
     }
 
     return(
@@ -80,7 +83,7 @@ function RegisterModal(){
                             <Dialog.ActionTrigger asChild>
                                 <Button bg={"white"} variant="outline">Close</Button>
                             </Dialog.ActionTrigger>
-                            <Button bg="#80775C" color="white" onClick={TryRegister}>
+                            <Button bg="#80775C" color="white" onClick={TryRegister} loading={loading}>
                                 Register
                             </Button>
                         </Dialog.Footer>
