@@ -4,6 +4,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import LoginCard from '../components/LoginCard';
+import logo from '../assets/scrawler-logo.png';
 
 function Login() {
   return (
@@ -15,10 +16,8 @@ function Login() {
       position="relative"
     >
       {/* Logo (top-left) */}
-      <Box position="absolute" top="20px" left="20px">
-        <Text bg="gray.200" p={2} borderRadius="md">
-          Logo
-        </Text>
+      <Box position="absolute" top="20px" left="20px" w={40} h={40}>
+        <img src={logo} alt="Scrawler Logo"/>
       </Box>
       <LoginCard/>
     </Flex>

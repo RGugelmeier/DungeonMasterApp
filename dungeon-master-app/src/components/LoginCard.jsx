@@ -9,6 +9,7 @@ import {
   Text,
   Heading,
   VStack,
+  Spinner,
 } from "@chakra-ui/react";
 import RegisterModal from './RegisterModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
@@ -18,10 +19,12 @@ function LoginCard() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   function TryLogin(event){
     event.preventDefault();
     setLoginError('');
+    setIsLoading(true);
 
     apiFetch('/auth/login', {
       method: 'POST',
@@ -39,6 +42,7 @@ function LoginCard() {
     })
     .catch(e => {
       setLoginError(e.response?.data?.error || 'Login failed. Please try again.')
+      setIsLoading(false);
     })
   }
 
@@ -71,8 +75,8 @@ function LoginCard() {
             </Box>
 
             {/* Login Button */}
-            <Button bg={"#574A24"} color={"white"} width="100%" onClick={TryLogin} type='submit'>
-                Login
+            <Button bg={"#574A24"} color={"white"} width="100%" onClick={TryLogin} type='submit' disabled={isLoading}>
+                {isLoading ? <Spinner size="sm" /> : 'Login'}
             </Button>
 
             {loginError && (

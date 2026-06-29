@@ -271,6 +271,9 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
     const [allPages, setAllPages] = useState([])
     const [hoveredCharId, setHoveredCharId] = useState(null)
     const [deleteTarget, setDeleteTarget] = useState(null)
+    const [addLoading, setAddLoading] = useState(false)
+    const [saveLoading, setSaveLoading] = useState(false)
+    const [saveSuccess, setSaveSuccess] = useState(false)
     const [newCharData, setNewCharData] = useState({
         character_name: '', owning_player: '', level: 1, race: '', char_class: '',
         hp: 0, max_hp: 0, ac: 0, speed: 30, passive_perception: 10, proficiency_bonus: 2,
@@ -386,6 +389,7 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
 
     const handleSave = async () => {
         if (!editBuffer || !selectedType) return
+        setSaveLoading(true)
         try {
             const response = await apiFetch("/characters/update_character", {
                 method: "POST",
@@ -400,13 +404,17 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
             setSelectedChar(updated)
             setEditBuffer({ ...updated })
             setEditMode(false)
+            setSaveSuccess(true)
         } catch (e) {
             console.error("Failed to save character:", e)
+        } finally {
+            setSaveLoading(false)
         }
     }
 
     const handleAddCharacter = async () => {
         if (!newCharData.character_name.trim()) return
+        setAddLoading(true)
         try {
             const response = await apiFetch("/characters/add_character", {
                 method: "POST",
@@ -418,6 +426,8 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
             setAddType(null)
         } catch (e) {
             console.error("Failed to add character:", e)
+        } finally {
+            setAddLoading(false)
         }
     }
 
@@ -524,9 +534,16 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
                             <SegmentGroup.ItemHiddenInput />
                         </SegmentGroup.Item>
                     </SegmentGroup.Root>
-                    <Button size="sm" variant="ghost" disabled={!editMode || !editBuffer} onClick={handleSave}>
-                        <LuSave /> Save
-                    </Button>
+                    <HStack gap={2}>
+                        {saveSuccess && (
+                            <Text fontSize="xs" color="green.600" className="save-success" onAnimationEnd={() => setSaveSuccess(false)}>
+                                Saved!
+                            </Text>
+                        )}
+                        <Button size="sm" variant="ghost" disabled={!editMode || !editBuffer} onClick={handleSave} loading={saveLoading}>
+                            <LuSave /> Save
+                        </Button>
+                    </HStack>
                 </HStack>
                 <Box flex="1" overflow="hidden" bg="white">
                     <CharacterSheet
@@ -633,6 +650,7 @@ function CharactersDashboard({ campaignId, onNavigateToPage }) {
                             <Button
                                 onClick={handleAddCharacter}
                                 disabled={!newCharData.character_name.trim()}
+                                loading={addLoading}
                             >Create</Button>
                         </Dialog.Footer>
                         <Dialog.CloseTrigger />

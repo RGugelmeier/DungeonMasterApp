@@ -5,7 +5,8 @@ import
     Text,
     VStack,
     HStack,
-    Input
+    Input,
+    IconButton,
 } from "@chakra-ui/react";
 import { LuSendHorizontal } from "react-icons/lu";
 import { useState } from "react";
@@ -14,22 +15,27 @@ import { apiFetch } from "../API/apiClient";
 function AIConversation({ campaignId }) {
     const [messages, setMessages] = useState([])
     const [input, setInput] = useState("")
+    const [isSending, setIsSending] = useState(false)
 
     async function handleSend() {
-        if (!input.trim()) return
-        const userMessage = { role: "user", text: input }
+        const text = input.trim()
+        if (!text || isSending) return
+        const userMessage = { role: "user", text }
         setMessages(prev => [...prev, userMessage])
         setInput("")
+        setIsSending(true)
 
         try {
             const response = await apiFetch("/ai/ask", {
                 method: "POST",
-                data: { prompt: input, active_campaign: campaignId }
+                data: { prompt: text, active_campaign: campaignId }
             })
             setMessages(prev => [...prev, { role: "ai", text: response.data.response }])
         } catch (error) {
             const errText = error.response?.data?.error || "Something went wrong."
             setMessages(prev => [...prev, { role: "ai", text: errText }])
+        } finally {
+            setIsSending(false)
         }
     }
 
@@ -55,14 +61,28 @@ function AIConversation({ campaignId }) {
                         ))}
                     </VStack>
                 </Box>
-                <Input
-                    placeholder="Enter Message"
-                    variant="flushed"
-                    bg="#F0EAD6"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                />
+                <HStack w="94%" pb={2} gap={1}>
+                    <Input
+                        placeholder="Enter Message"
+                        variant="flushed"
+                        bg="#F0EAD6"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                        disabled={isSending}
+                        flex="1"
+                    />
+                    <IconButton
+                        size="sm"
+                        variant="ghost"
+                        aria-label="Send message"
+                        onClick={handleSend}
+                        disabled={isSending || !input.trim()}
+                        loading={isSending}
+                    >
+                        <LuSendHorizontal />
+                    </IconButton>
+                </HStack>
             </VStack>
         </Box>
         </Flex>
