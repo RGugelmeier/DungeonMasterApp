@@ -19,7 +19,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../API/apiClient";
 import { Control, RichTextEditor } from "@/components/ui/rich-text-editor"
 import StarterKit from "@tiptap/starter-kit";
-import TextStyle from "@tiptap/extension-text-style";
+import { TextStyle } from "@tiptap/extension-text-style";
 import Highlight from "@tiptap/extension-highlight";
 
 // Single TextStyle extension carrying both color and font-size so they stack correctly
