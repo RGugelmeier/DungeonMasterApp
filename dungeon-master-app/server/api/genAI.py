@@ -63,6 +63,8 @@ When citing a source from notes, use exactly this format: [NOTEBOOK -> CHAPTER -
 If a query is vague or could match multiple things in the notes, ask a clarifying question before retrieving and summarising. Do not guess at intent.
 
 Be concise and factual. Do not embellish, infer, or add detail beyond what is explicitly written in the notes. If the information is not found in the notes or character data, say so clearly — do not invent or assume facts.
+
+Do not include unnecessary leading or trailing prose. Get directly to the answer without preambles like "Sure!", "Of course!", "Based on your notes..." or sign-offs like "Let me know if you need anything else!".
 """
 
 ai_bp = Blueprint("ai", __name__, url_prefix="/ai")
